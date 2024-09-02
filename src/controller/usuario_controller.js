@@ -2,12 +2,15 @@ import Usuario from '../models/usuario.js'
 import generarJWT from "../helpers/crearJWT.js";
 import mongoose from "mongoose"
 
-const registro = async(req,res)=>{
-    const {nombre, apellido, email, password} = req.body
+const registro = async (req, res) => {
+    const { nombre, apellido, email, password } = req.body;
 
-    if (Object.values(req.body).includes("")){
-        return res.status(400).json({msg:"Lo sentimos, debes llenar todos los campos"})
-    } 
+    // Validar que no haya campos vacíos
+    if (Object.values(req.body).includes("")) {
+        return res.status(400).json({ msg: "Lo sentimos, debes llenar todos los campos" });
+    }
+
+    // Validar caracteres en nombre y apellido
     const caracteres = /^[a-zA-ZÀ-ÿ\s]+$/;
     if (!caracteres.test(nombre)) {
         return res.status(400).json({ msg: "El nombre solo puede contener letras y espacios" });
@@ -16,17 +19,26 @@ const registro = async(req,res)=>{
         return res.status(400).json({ msg: "El apellido solo puede contener letras y espacios" });
     }
 
-    const verificarEmailBDD = await Usuario.findOne({email})
-    if(verificarEmailBDD){
-        return res.status(400).json({msg:"El email ya se encuentra registrado, intente con uno diferente"})
-    } 
-    const nuevoUsuario = new Usuario(req.body)
-    nuevoUsuario.password = await nuevoUsuario.encrypPassword(password)
-    nuevoUsuario.crearToken()
-    await nuevoUsuario.save()
+    try {
+        // Verificar si el email ya existe en la BDD
+        const verificarEmailBDD = await Usuario.findOne({ email });
+        if (verificarEmailBDD) {
+            return res.status(400).json({ msg: "El email ya se encuentra registrado, intente con uno diferente" });
+        }
 
-    res.status(200).json({msg:"Usuario registrado correctamente"})
-}
+        // Crear nuevo usuario y encriptar contraseña
+        const nuevoUsuario = new Usuario({ nombre, apellido, email });
+        nuevoUsuario.password = await nuevoUsuario.encrypPassword(password);
+        nuevoUsuario.crearToken();
+        await nuevoUsuario.save();
+
+        res.status(200).json({ msg: "Usuario registrado correctamente" });
+    } catch (error) {
+        console.error("Error durante el registro:", error);
+        res.status(500).json({ msg: "Hubo un error en el servidor durante el registro" });
+    }
+};
+
 
 const login = async(req,res) =>{
     const {email, password} = req.body;

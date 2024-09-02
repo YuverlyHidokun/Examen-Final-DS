@@ -68,16 +68,25 @@ const ActualizarTecnico = async (req, res) => {
     }
 };
 
-const EliminarTecnico = async (req,res) => {
+const EliminarTecnico = async (req, res) => {
+    const { id } = req.params;
 
-    const {id} = req.params
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ msg: "Lo sentimos, no existe un técnico registrado con ese id" });
+    }
 
-    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({msg:"Lo sentimos, no se ha encontrado al tecnico"})
+    try {
+        const resultado = await Tecnico.findByIdAndDelete(id);
+        if (!resultado) {
+            return res.status(404).json({ msg: "Técnico no encontrado" });
+        }
+        res.status(200).json({ msg: "El registro del técnico ha sido eliminado exitosamente" });
+    } catch (error) {
+        console.error("Error al eliminar el técnico:", error);
+        res.status(500).json({ msg: "Hubo un error al eliminar el técnico" });
+    }
+};
 
-    await Tecnico.findByIdAndDelete(id)
-
-    res.status(200).json({msg:"El registro del tecnico ha sido eliminado exitosamente"})
-}
 
 
 export{
