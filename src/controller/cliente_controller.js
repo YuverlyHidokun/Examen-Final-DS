@@ -83,16 +83,25 @@ const ActualizarCliente= async (req, res) => {
 };
 
 
-const EliminarCliente = async (req,res) => {
+const EliminarCliente = async (req, res) => {
+    const { id } = req.params;
 
-    const {id} = req.params
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ msg: "Lo sentimos, no existe un cliente registrado con ese id" });
+    }
 
-    if(!mongoose.Types.ObjectId.isValid(id)) return res.status(404).json({msg:"Lo sentimos, no se ha encontrado al cliente"})
+    try {
+        const resultado = await Cliente.findByIdAndDelete(id);
+        if (!resultado) {
+            return res.status(404).json({ msg: "Cliente no encontrado" });
+        }
+        res.status(200).json({ msg: "El registro del cliente ha sido eliminado exitosamente" });
+    } catch (error) {
+        console.error("Error al eliminar el cliente:", error);
+        res.status(500).json({ msg: "Hubo un error al eliminar el cliente" });
+    }
+};
 
-    await Cliente.findByIdAndDelete(id)
-
-    res.status(200).json({msg:"El registro del cliente ha sido eliminado exitosamente"})
-}
 
 export{
     CrearCliente,
